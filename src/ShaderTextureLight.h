@@ -1,0 +1,124 @@
+#ifndef _ShaderTextureLight
+#define _ShaderTextureLight
+
+#include "ShaderBase.h"
+#include "Matrix.h"
+
+class Texture;
+
+struct ID3D11Buffer;
+struct ID3D11Device;
+
+class ShaderTextureLight : public ShaderBase
+{
+public:
+	ShaderTextureLight(const ShaderTextureLight&) = delete;
+	ShaderTextureLight(ShaderTextureLight&&) = default;
+	ShaderTextureLight& operator=(const ShaderTextureLight&) & = default;
+	ShaderTextureLight& operator=(ShaderTextureLight&&) & = default;
+	~ShaderTextureLight();
+
+	ShaderTextureLight(ID3D11Device* device);
+
+	virtual void SetToContext(ID3D11DeviceContext* devcon) override;
+
+	void SetTextureResourceAndSampler(Texture* tex);
+
+	void SetDirectionalLightParameters(const Vect& dir, const Vect& amb = Vect(1, 1, 1), const Vect& dif = Vect(1, 1, 1), const Vect& sp = Vect(1, 1, 1));
+	void SetPointLightParameters(int lightNum, const Vect& pos, float r, const Vect& att, const Vect& amb = Vect(1, 1, 1), const Vect& dif = Vect(1, 1, 1), const Vect& sp = Vect(1, 1, 1));
+	void SetSpotLightParameters(int lightNum, const Vect& pos, float r, const Vect& att, const Vect& dir, float spotExp, const Vect& amb = Vect(1, 1, 1), const Vect& dif = Vect(1, 1, 1), const Vect& sp = Vect(1, 1, 1));
+
+	void SendCamMatrices(const Matrix& view, const Matrix& proj);
+	void SendWorldAndMaterial(const Matrix& world, const Vect& amb = Vect(.5f, .5f, .5f), const Vect& dif = Vect(.5f, .5f, .5f), const Vect& sp = Vect(.5f, .5f, .5f));
+	void SendLightParameters(const Vect& eyepos);
+	void SendFogData(const float& start, const float& range, const Vect& color);
+
+	struct Material
+	{
+		Vect Ambient;
+		Vect Diffuse;
+		Vect Specular;
+	};
+
+private:
+
+
+	struct PhongADS
+	{
+		Vect Ambient;
+		Vect Diffuse;
+		Vect Specular;
+	};
+
+
+
+	struct DirectionalLight
+	{
+		PhongADS Light;
+		Vect Direction;
+	};
+
+	DirectionalLight DirLightData;
+
+	struct PointLight
+	{
+		PhongADS Light;
+		Vect Position;
+		Vect Attenuation;
+		float Range;
+	};
+
+	PointLight PointLightData[3];
+
+	struct SpotLight
+	{
+		PhongADS Light;
+		Vect Position;
+		Vect Attenuation;
+		Vect Direction;
+		float SpotExp;
+		float Range;
+	};
+
+	SpotLight SpotLightData[3];
+
+	struct CamMatrices
+	{
+		Matrix View;
+		Matrix Projection;
+	};
+
+	ID3D11Buffer* mpBufferCamMatrices;
+
+	struct Data_WorldAndMaterial
+	{
+		Matrix World;
+		Matrix WorlInv;
+		Material Mat;
+	};
+
+	ID3D11Buffer* mpBuffWordAndMaterial;
+
+	struct Data_LightParams
+	{
+		DirectionalLight DirLight;
+		PointLight PntLight[3];
+		SpotLight SptLight[3];
+		Vect EyePosWorld;
+	};
+
+	ID3D11Buffer* mpBufferLightParams;
+
+	struct FogData
+	{
+		float FogStart;
+		float FogRange;
+		Vect FogColor;
+	};
+
+	FogData mFogData;
+
+	ID3D11Buffer* mpBufferFog;
+};
+
+#endif _ShaderTextureLight
